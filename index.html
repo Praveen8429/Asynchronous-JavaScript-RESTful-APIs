@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A real-time, responsive weather dashboard with glassmorphism design, detailed weather metrics, hourly & daily forecasts using Open-Meteo API.">
+  <title>Atmospheric Glass - Weather Dashboard</title>
+  
+  <!-- Google Fonts - Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-clear">
+  <div id="app-background-container" class="app-background"></div>
+  
+  <div class="dashboard-wrapper">
+    <!-- Header with Search and Geolocation -->
+    <header class="app-header">
+      <div class="brand">
+        <h1 id="app-title"><i data-lucide="cloud-sun" class="brand-icon"></i>Atmospheric Glass</h1>
+        <p class="brand-tagline">Real-time adaptive weather metrics</p>
+      </div>
+      
+      <div class="search-section">
+        <form id="search-form" class="search-form" autocomplete="off" onsubmit="event.preventDefault();">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon-inside"></i>
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Search for a city..." 
+              aria-label="Search city name"
+              required
+            >
+            <button type="button" id="clear-search-btn" class="clear-btn" aria-label="Clear search input" style="display: none;">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+          
+          <button type="button" id="geolocation-btn" class="geo-btn" title="Use current location" aria-label="Use current location">
+            <i data-lucide="map-pin"></i>
+          </button>
+        </form>
+        
+        <!-- Search suggestions dropdown -->
+        <div id="suggestions-dropdown" class="suggestions-dropdown" style="display: none;">
+          <ul id="suggestions-list" class="suggestions-list"></ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Loading Skeleton Screen -->
+      <section id="loading-skeleton" class="skeleton-container" style="display: none;">
+        <div class="skeleton-hero-card"></div>
+        <div class="skeleton-forecast-card"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-grid-item"></div>
+          <div class="skeleton-grid-item"></div>
+          <div class="skeleton-grid-item"></div>
+          <div class="skeleton-grid-item"></div>
+          <div class="skeleton-grid-item"></div>
+          <div class="skeleton-grid-item"></div>
+        </div>
+      </section>
+
+      <!-- Error State Card -->
+      <section id="error-card" class="glass-card error-card" style="display: none;">
+        <div class="error-content">
+          <div class="error-icon-wrapper">
+            <i id="error-icon" data-lucide="alert-triangle"></i>
+          </div>
+          <h2 id="error-title">Location Not Found</h2>
+          <p id="error-message">We couldn't retrieve weather data for that location. Please verify the spelling or check your network connection.</p>
+          <button id="error-retry-btn" class="retry-btn">Try Again</button>
+        </div>
+      </section>
+
+      <!-- Weather Dashboard Content -->
+      <section id="weather-dashboard-content" class="dashboard-grid" style="display: none;">
+        
+        <!-- Hero Details Column / Left Column -->
+        <div class="hero-column">
+          <!-- Main Weather Status Card -->
+          <div id="weather-hero-card" class="glass-card hero-card">
+            <div class="hero-card-header">
+              <div class="location-info">
+                <h2 id="weather-city-name" class="city-name">Loading...</h2>
+                <p id="weather-country-name" class="country-name">-</p>
+                <p id="weather-date" class="current-date">-</p>
+              </div>
+              <div id="weather-main-icon-container" class="weather-main-icon-container">
+                <i id="weather-main-icon" data-lucide="sun" class="weather-hero-icon"></i>
+              </div>
+            </div>
+            
+            <div class="hero-card-body">
+              <div class="temperature-info">
+                <span id="weather-temp-value" class="temp-value">--</span>
+                <span class="temp-unit">°C</span>
+              </div>
+              <div class="condition-info">
+                <p id="weather-condition-desc" class="condition-desc">Clear Sky</p>
+                <div class="temp-range">
+                  <span>H: <strong id="weather-temp-max">--°</strong></span>
+                  <span>L: <strong id="weather-temp-min">--°</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hourly Forecast Card -->
+          <div class="glass-card hourly-card">
+            <h3 class="card-title"><i data-lucide="clock"></i>Hourly Forecast</h3>
+            <div id="hourly-forecast-container" class="hourly-forecast-container">
+              <!-- Hourly items injected dynamically via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Metrics Grid & Weekly Forecast -->
+        <div class="details-column">
+          <!-- Key Metrics Grid -->
+          <div class="metrics-grid">
+            <!-- Feels Like -->
+            <div class="glass-card metric-card">
+              <div class="metric-header">
+                <span class="metric-label"><i data-lucide="thermometer"></i>Feels Like</span>
+              </div>
+              <div class="metric-value-container">
+                <span id="metric-feels-like" class="metric-value">--</span>
+                <span class="metric-small-unit">°C</span>
+              </div>
+              <p id="metric-feels-like-sub" class="metric-subtitle">Similar to the actual temperature.</p>
+            </div>
+
+            <!-- Humidity -->
+            <div class="glass-card metric-card">
+              <div class="metric-header">
+                <span class="metric-label"><i data-lucide="droplets"></i>Humidity</span>
+              </div>
+              <div class="metric-value-container">
+                <span id="metric-humidity" class="metric-value">--</span>
+                <span class="metric-small-unit">%</span>
+              </div>
+              <p id="metric-humidity-sub" class="metric-subtitle">Loading...</p>
+            </div>
+
+            <!-- Wind Metrics -->
+            <div class="glass-card metric-card">
+              <div class="metric-header">
+                <span class="metric-label"><i data-lucide="wind"></i>Wind Speed</span>
+              </div>
+              <div class="metric-value-container">
+                <span id="metric-wind" class="metric-value">--</span>
+                <span class="metric-small-unit">km/h</span>
+              </div>
+              <p id="metric-wind-dir" class="metric-subtitle">Direction: --</p>
+            </div>
+
+            <!-- Cloud Cover -->
+            <div class="glass-card metric-card">
+              <div class="metric-header">
+                <span class="metric-label"><i data-lucide="cloud"></i>Cloud Cover</span>
+              </div>
+              <div class="metric-value-container">
+                <span id="metric-clouds" class="metric-value">--</span>
+                <span class="metric-small-unit">%</span>
+              </div>
+              <p id="metric-clouds-sub" class="metric-subtitle">Sky coverage overview.</p>
+            </div>
+
+            <!-- Visibility -->
+            <div class="glass-card metric-card">
+              <div class="metric-header">
+                <span class="metric-label"><i data-lucide="eye"></i>Visibility</span>
+              </div>
+              <div class="metric-value-container">
+                <span id="metric-visibility" class="metric-value">--</span>
+                <span class="metric-small-unit">km</span>
+              </div>
+              <p id="metric-visibility-sub" class="metric-subtitle">Clear view distance.</p>
+            </div>
+
+            <!-- Barometric Pressure -->
+            <div class="glass-card metric-card">
+              <div class="metric-header">
+                <span class="metric-label"><i data-lucide="gauge"></i>Pressure</span>
+              </div>
+              <div class="metric-value-container">
+                <span id="metric-pressure" class="metric-value">--</span>
+                <span class="metric-small-unit">hPa</span>
+              </div>
+              <p id="metric-pressure-sub" class="metric-subtitle">Atmospheric pressure levels.</p>
+            </div>
+          </div>
+
+          <!-- 7-Day Forecast Card -->
+          <div class="glass-card weekly-card">
+            <h3 class="card-title"><i data-lucide="calendar"></i>7-Day Forecast</h3>
+            <div id="weekly-forecast-list" class="weekly-forecast-list">
+              <!-- Weekly items injected dynamically via JS -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>Data powered by the public <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo API</a>. Designed with atmospheric glass aesthetics.</p>
+    </footer>
+  </div>
+
+  <!-- Lucide Icon Library -->
+  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+  
+  <!-- JavaScript Application logic -->
+  <script src="app.js"></script>
+</body>
+</html>
